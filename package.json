@@ -40,7 +40,8 @@
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^6.5.4",
-    "typeorm": "^0.2.29"
+    "typeorm": "^0.2.29",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^7.0.0",
@@ -52,6 +53,7 @@
     "@types/jsonwebtoken": "^9.0.1",
     "@types/node": "^13.9.1",
     "@types/supertest": "^2.0.11",
+    "@types/uuid": "^9.0.1",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
     "eslint": "^8.0.1",
