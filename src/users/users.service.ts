@@ -12,6 +12,7 @@ import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { Verification } from './entities/verification.entity';
 import { UserProfileOutput } from './dtos/user-profile.dto';
 import { VerifyEmailOutput } from './dtos/verify-email.dto';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class UsersService {
@@ -21,6 +22,7 @@ export class UsersService {
     @InjectRepository(Verification)
     private readonly verification: Repository<Verification>,
     private readonly jwtService: JwtService,
+    private readonly mailService: MailService,
   ) {}
 
   async createAccount({
@@ -39,7 +41,10 @@ export class UsersService {
         this.users.create({ email, password, role }),
       );
       // email verification 만들기
-      await this.verification.save(this.verification.create({ user }));
+      const mailVerification = await this.verification.save(
+        this.verification.create({ user }),
+      );
+      this.mailService.sendVerificationEmail(user.email, mailVerification.code);
       return { ok: true };
     } catch (e) {
       console.log(e);
@@ -108,9 +113,13 @@ export class UsersService {
       if (email) {
         user.email = email;
         user.verified = false;
-        const verifyConfirm = this.verification.create({ user });
-        console.log('verification create: ', verifyConfirm);
-        await this.verification.save(verifyConfirm);
+        const mailVerification = await this.verification.save(
+          this.verification.create({ user }),
+        );
+        this.mailService.sendVerificationEmail(
+          user.email,
+          mailVerification.code,
+        );
       }
       if (password) {
         user.password = password;
