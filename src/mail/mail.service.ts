@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-empty-function */
 import { Inject, Injectable } from '@nestjs/common';
 import { CONFIG_OPTIONS } from '../common/commom.constant';
 import { MailModuleOptions, EmailVar } from './mail.interface';
@@ -24,11 +26,11 @@ export class MailService {
     //     console.log(error.response.body);
     //   });
   }
-  private async sendEmail(
+  async sendEmail(
     subject: string,
     template: string,
     emailVar: EmailVar[],
-  ) {
+  ): Promise<boolean> {
     const form = new FormData();
     form.append('from', `Mi0 from Nuber Eats<mailgun@${this.options.domain}>`);
     form.append('to', 'noonchicat@naver.com');
@@ -36,17 +38,21 @@ export class MailService {
     form.append('template', template);
     emailVar.forEach((eVar) => form.append(`v:${eVar.key}`, eVar.value));
     try {
-      await got(`https://api.mailgun.net/v3/${this.options.domain}/messages`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${Buffer.from(
-            `api:${this.options.apiKey}`,
-          ).toString('base64')}`,
+      await got.post(
+        `https://api.mailgun.net/v3/${this.options.domain}/messages`,
+        {
+          headers: {
+            Authorization: `Basic ${Buffer.from(
+              `api:${this.options.apiKey}`,
+            ).toString('base64')}`,
+          },
+          body: form,
         },
-        body: form,
-      });
+      );
+      return true;
     } catch (error) {
-      console.log(error);
+      // console.log(error);
+      return false;
     }
   }
 
@@ -55,11 +61,7 @@ export class MailService {
       { key: 'code', value: code },
       { key: 'username', value: email },
     ])
-      .then(() => {
-        console.log('Message sent');
-      })
-      .catch((error) => {
-        console.log(error.response.body);
-      });
+      .then((_) => {})
+      .catch((_) => {});
   }
 }

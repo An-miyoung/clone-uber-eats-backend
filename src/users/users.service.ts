@@ -47,7 +47,6 @@ export class UsersService {
       this.mailService.sendVerificationEmail(user.email, mailVerification.code);
       return { ok: true };
     } catch (e) {
-      console.log(e);
       return { ok: false, error: '계정을 만들지 못했습니다.' };
     }
   }
@@ -82,20 +81,18 @@ export class UsersService {
     } catch (error) {
       return {
         ok: false,
-        error,
+        error: '로그인에 실패했습니다.',
       };
     }
   }
 
   async findUserById(id: number): Promise<UserProfileOutput> {
     try {
-      const user = await this.users.findOne({ id });
-      if (user) {
-        return {
-          ok: true,
-          user,
-        };
-      }
+      const user = await this.users.findOneOrFail({ id });
+      return {
+        ok: true,
+        user,
+      };
     } catch (error) {
       return {
         ok: false,
@@ -113,6 +110,7 @@ export class UsersService {
       if (email) {
         user.email = email;
         user.verified = false;
+        this.verification.delete({ user: { id: user.id } });
         const mailVerification = await this.verification.save(
           this.verification.create({ user }),
         );
@@ -143,7 +141,6 @@ export class UsersService {
         { code },
         { relations: ['user'] },
       );
-      console.log('email: ', verification);
       if (verification) {
         const { user } = verification;
         user.verified = true;
@@ -153,11 +150,14 @@ export class UsersService {
           ok: true,
         };
       }
-    } catch (error) {
-      console.log(error);
       return {
         ok: false,
-        error,
+        error: '이메일 인증이 존재하지 않습니다.',
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error: '이메일로 올바른 사용자인지 식별하는데 실패했습니다.',
       };
     }
   }
