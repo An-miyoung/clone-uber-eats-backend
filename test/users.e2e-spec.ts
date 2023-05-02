@@ -6,7 +6,6 @@ import { Repository, getConnection } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Verification } from 'src/users/entities/verification.entity';
-import { query } from 'express';
 
 jest.mock('got', () => {
   return {
