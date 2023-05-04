@@ -10,7 +10,7 @@ import {
 import { AuthGuard } from 'src/auth/auth.guard';
 import { User, UserRole } from 'src/users/entities/user.entity';
 import { AuthUser } from 'src/auth/auth-user.decorator';
-import { SetMetadata } from '@nestjs/common';
+import { Role } from 'src/auth/role.decorator';
 
 @Resolver((of) => Restaurant)
 export class RestaurantsResolver {
@@ -18,7 +18,7 @@ export class RestaurantsResolver {
   constructor(private readonly restaurantService: RestaurantService) {}
 
   @Mutation((returns) => CreateRestaurantOutput)
-  @SetMetadata('role', UserRole.owner)
+  // @Role('Owner')
   async createRestaurant(
     @AuthUser() authUser: User,
     @Args('input') createRestaurantInput: CreateRestaurantInput,

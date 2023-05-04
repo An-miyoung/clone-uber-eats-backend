@@ -13,9 +13,9 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
 
 export enum UserRole {
-  'client',
-  'owner',
-  'delivery',
+  Client = 'Client',
+  Owner = 'Owner',
+  Delivery = 'Delivery',
 }
 registerEnumType(UserRole, { name: 'UserRole' });
 
@@ -47,7 +47,9 @@ export class User extends CoreEntity {
   verified: boolean;
 
   @Field((type) => [Restaurant], { nullable: true })
-  @OneToMany((type) => Restaurant, (restaurant) => restaurant.owner)
+  @OneToMany((type) => Restaurant, (restaurant) => restaurant.owner, {
+    onDelete: 'CASCADE',
+  })
   restaurants: Restaurant[];
 
   @BeforeInsert()
