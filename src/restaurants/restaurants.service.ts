@@ -136,14 +136,12 @@ export class RestaurantService {
     }
   }
 
-  async findCategoryByslug({ slug }: CategoryInput): Promise<CategoryOutput> {
+  async findCategoryByslug({
+    slug,
+    page,
+  }: CategoryInput): Promise<CategoryOutput> {
     try {
-      const category = await this.categories.findOne(
-        { slug: slug },
-        {
-          relations: ['restaurants'],
-        },
-      );
+      const category = await this.categories.findOne({ slug: slug });
       if (!Category) {
         return {
           ok: false,
@@ -151,9 +149,21 @@ export class RestaurantService {
         };
       }
 
+      const restaurant = await this.restaurants.find({
+        where: {
+          category,
+        },
+        // 한페이지당 몇개의 item 을 보여줄지
+        take: 25,
+        // 몇번째 item 까지 스킵할것인가 계샨
+        skip: (page - 1) * 25,
+      });
+      category.restaurants = restaurant;
+      const totalResults = await this.countRestaurant(category);
       return {
         ok: true,
         category,
+        totalPages: Math.ceil(totalResults / 5),
       };
     } catch (error) {
       return { ok: false, error: '해당 카테고리를 읽어오는데 실패했습니다.' };
