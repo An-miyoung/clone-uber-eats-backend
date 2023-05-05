@@ -36,6 +36,7 @@ export class Restaurant extends CoreEntity {
   @ManyToOne((type) => User, (user) => user.restaurants)
   owner: User;
 
+  // owner 을 User 전부로 받지 않고 id 만 가져오는 경우
   @RelationId((restaurant: Restaurant) => restaurant.owner)
   ownerId: number;
 }
