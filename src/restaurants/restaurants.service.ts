@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Restaurant } from './entities/restaurant.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Like, Raw, Repository } from 'typeorm';
 import {
   CreateRestaurantInput,
   CreateRestaurantOutput,
@@ -20,6 +20,12 @@ import {
 import { CoreOutput } from 'src/common/dtos/output.dto';
 import { AllCategorieOutput } from './dtos/all-catgories.dto';
 import { CategoryInput, CategoryOutput } from './dtos/category.dto';
+import { RestaurantsInput, RestaurantsOutput } from './dtos/restaurants.dto';
+import { RestaurantInput, RestaurantOutput } from './dtos/restaurant.dto';
+import {
+  SearchRestaurantInput,
+  SearchRestaurantOutput,
+} from './dtos/searchRestaurant.dto';
 
 // 실제 데이터에 접근하는 함수들을 모음.
 @Injectable()
@@ -155,7 +161,7 @@ export class RestaurantService {
         },
         // 한페이지당 몇개의 item 을 보여줄지
         take: 25,
-        // 몇번째 item 까지 스킵할것인가 계샨
+        // 몇개 item 까지 스킵할것인가 계샨
         skip: (page - 1) * 25,
       });
 
@@ -168,6 +174,67 @@ export class RestaurantService {
       };
     } catch (error) {
       return { ok: false, error: '해당 카테고리를 읽어오는데 실패했습니다.' };
+    }
+  }
+
+  async allRestaurants({ page }: RestaurantsInput): Promise<RestaurantsOutput> {
+    try {
+      const [restaurants, totalResults] = await this.restaurants.findAndCount({
+        skip: (page - 1) * 25,
+        take: 25,
+      });
+      return {
+        ok: true,
+        results: restaurants,
+        totalPages: Math.ceil(totalResults / 25),
+        totalResults,
+      };
+    } catch (error) {
+      return { ok: false, error: '레스토랑 목록을 가져오는데 실패했습니다.' };
+    }
+  }
+
+  async findRestaurantById({
+    restaurantId,
+  }: RestaurantInput): Promise<RestaurantOutput> {
+    try {
+      const restaurant = await this.restaurants.findOne(restaurantId);
+      if (!restaurant) {
+        return { ok: false, error: '해당 레스토랑을 찾을 수 없습니다.' };
+      }
+      return {
+        ok: true,
+        restaurant,
+      };
+    } catch (error) {
+      return { ok: false, error: '해당 레스토랑을 찾을 수 없습니다.' };
+    }
+  }
+
+  async searchRestaurantByName({
+    query,
+    page,
+  }: SearchRestaurantInput): Promise<SearchRestaurantOutput> {
+    try {
+      const [restaurants, totalResults] = await this.restaurants.findAndCount({
+        where: {
+          // 레스토랑 이름 어디라도 query 내용이 있다면 찾을 수 있도록
+          // name: Like(`%${query}%`) 을 사용하면, 대소문자를 구별한다. 사용자가 불편
+          // sql 을 써서 db 에 직접 명령을 내리도록 Raw 사용
+          name: Raw((name) => `${name} ILike '%${query}%'`),
+        },
+        skip: (page - 1) * 25,
+        take: 25,
+      });
+
+      return {
+        ok: true,
+        restaurants,
+        totalResults,
+        totalPages: Math.ceil(totalResults / 25),
+      };
+    } catch {
+      return { ok: false, error: '원하는 레스토랑을 찾을 수 없습니다.' };
     }
   }
 }
