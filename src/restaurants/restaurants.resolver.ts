@@ -1,6 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prettier/prettier */
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Int,
+  Mutation,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
 import { Restaurant } from './entities/restaurant.entity';
 import { RestaurantService } from './restaurants.service';
 import {
@@ -19,6 +27,9 @@ import {
   DeleteRestaurantInput,
   DeleteRestaurantOutput,
 } from './dtos/delete-restaurant.dto';
+import { Category } from './entities/category.entity';
+import { AllCategorieOutput } from './dtos/all-catgories.dto';
+import { CategoryInput, CategoryOutput } from './dtos/category.dto';
 
 @Resolver((of) => Restaurant)
 export class RestaurantsResolver {
@@ -56,5 +67,28 @@ export class RestaurantsResolver {
       authUser,
       deleteRestaurantInput,
     );
+  }
+}
+
+@Resolver((of) => Category)
+export class CategoryResolver {
+  constructor(private readonly restaurantService: RestaurantService) {}
+
+  // DB에 없고, 사용자가 필요로 할때 계산한 값을 주는 다이나믹 필드
+  @ResolveField((type) => Int)
+  async restaurantCount(@Parent() category: Category): Promise<number> {
+    return this.restaurantService.countRestaurant(category);
+  }
+
+  @Query((type) => AllCategorieOutput)
+  allCategories(): Promise<AllCategorieOutput> {
+    return this.restaurantService.allCategories();
+  }
+
+  @Query((type) => CategoryOutput)
+  async category(
+    @Args('input') categoryInput: CategoryInput,
+  ): Promise<CategoryOutput> {
+    return this.restaurantService.findCategoryByslug(categoryInput);
   }
 }

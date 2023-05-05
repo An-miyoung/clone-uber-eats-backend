@@ -18,6 +18,8 @@ import {
   DeleteRestaurantOutput,
 } from './dtos/delete-restaurant.dto';
 import { CoreOutput } from 'src/common/dtos/output.dto';
+import { AllCategorieOutput } from './dtos/all-catgories.dto';
+import { CategoryInput, CategoryOutput } from './dtos/category.dto';
 
 // 실제 데이터에 접근하는 함수들을 모음.
 @Injectable()
@@ -113,6 +115,48 @@ export class RestaurantService {
       return { ok: true };
     } catch (error) {
       return { ok: false, error: '레스토랑계정을 삭제하는데 실패했습니다.' };
+    }
+  }
+
+  async allCategories(): Promise<AllCategorieOutput> {
+    try {
+      const categories = await this.categories.find();
+      return { ok: true, categories };
+    } catch (error) {
+      return { ok: false, error: '카테고리목록을 읽어 오는데 실패했습니다.' };
+    }
+  }
+
+  async countRestaurant(category: Category): Promise<number> {
+    try {
+      return await this.restaurants.count({ category });
+    } catch (error) {
+      console.log(error.message);
+      return null;
+    }
+  }
+
+  async findCategoryByslug({ slug }: CategoryInput): Promise<CategoryOutput> {
+    try {
+      const category = await this.categories.findOne(
+        { slug: slug },
+        {
+          relations: ['restaurants'],
+        },
+      );
+      if (!Category) {
+        return {
+          ok: false,
+          error: '해당 카테고리가 없습니다.',
+        };
+      }
+
+      return {
+        ok: true,
+        category,
+      };
+    } catch (error) {
+      return { ok: false, error: '해당 카테고리를 읽어오는데 실패했습니다.' };
     }
   }
 }
