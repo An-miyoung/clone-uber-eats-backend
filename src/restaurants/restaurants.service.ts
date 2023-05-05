@@ -149,7 +149,7 @@ export class RestaurantService {
         };
       }
 
-      const restaurant = await this.restaurants.find({
+      const restaurants = await this.restaurants.find({
         where: {
           category,
         },
@@ -158,12 +158,13 @@ export class RestaurantService {
         // 몇번째 item 까지 스킵할것인가 계샨
         skip: (page - 1) * 25,
       });
-      category.restaurants = restaurant;
+
       const totalResults = await this.countRestaurant(category);
       return {
         ok: true,
+        restaurants,
         category,
-        totalPages: Math.ceil(totalResults / 5),
+        totalPages: Math.ceil(totalResults / 25),
       };
     } catch (error) {
       return { ok: false, error: '해당 카테고리를 읽어오는데 실패했습니다.' };
