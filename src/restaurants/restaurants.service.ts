@@ -28,6 +28,8 @@ import {
 } from './dtos/searchRestaurant.dto';
 import { CreateDishInput, CreateDishOutput } from './dtos/create-dish.dto';
 import { Dish } from './entities/dish.entity';
+import { EditDishInput, EditDishOutput } from './dtos/edit-dish.dto';
+import { DeleteDishInput, DeleteDishOutput } from './dtos/delete-dish.dto';
 
 // 실제 데이터에 접근하는 함수들을 모음.
 @Injectable()
@@ -262,7 +264,8 @@ export class RestaurantService {
           error: '해당 레스토랑의 owner 만 메뉴를 만들 수 있습니다.',
         };
       }
-
+      // 인자로 restaurantId 를 줘도 dishes.create 에서 직접 연결해 가져가지 않는다.
+      // 이런 형태로 { ...createDishInput, restaurant } 넣어줘야 한다.
       await this.dishes.save(
         this.dishes.create({ ...createDishInput, restaurant }),
       );
@@ -271,6 +274,66 @@ export class RestaurantService {
       return { ok: true };
     } catch {
       return { ok: false, error: '메뉴를 생성에 실패했습니다.' };
+    }
+  }
+
+  async editDish(
+    owner: User,
+    editDishInput: EditDishInput,
+  ): Promise<EditDishOutput> {
+    try {
+      const dish = await this.dishes.findOne(editDishInput.dishId, {
+        relations: ['restaurant'],
+      });
+      if (!dish) {
+        return { ok: false, error: '해당메뉴를 찾을 수 없습니다.' };
+      }
+
+      if (owner.id !== dish.restaurant.ownerId) {
+        return {
+          ok: false,
+          error: '해당 레스토랑의 owner 만 메뉴를 수정할 수 있습니다.',
+        };
+      }
+
+      await this.dishes.save([
+        {
+          id: editDishInput.dishId,
+          ...editDishInput,
+        },
+      ]);
+      return { ok: true };
+    } catch {
+      return { ok: false, error: '메뉴 수정을 실패했습니다.' };
+    }
+  }
+
+  async deleteDish(
+    owner: User,
+    { dishId }: DeleteDishInput,
+  ): Promise<DeleteDishOutput> {
+    try {
+      const dish = await this.dishes.findOne(dishId, {
+        relations: ['restaurant'],
+      });
+      if (!dish) {
+        return { ok: false, error: '해당메뉴를 찾을 수 없습니다.' };
+      }
+
+      if (owner.id !== dish.restaurant.ownerId) {
+        return {
+          ok: false,
+          error: '해당 레스토랑의 owner 만 메뉴를 삭제할 수 있습니다.',
+        };
+      }
+
+      // const newRestaurant = { ...restaurant, }
+      // this.restaurants.save([{id: dish.retaurantId, }])
+      await this.dishes.delete(dishId);
+
+      return { ok: true };
+    } catch {
+      return { ok: false, error: '메뉴를 삭제하는 데 실패했습니다.' };
     }
   }
 }
