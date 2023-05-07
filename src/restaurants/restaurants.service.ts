@@ -26,6 +26,8 @@ import {
   SearchRestaurantInput,
   SearchRestaurantOutput,
 } from './dtos/searchRestaurant.dto';
+import { CreateDishInput, CreateDishOutput } from './dtos/create-dish.dto';
+import { Dish } from './entities/dish.entity';
 
 // 실제 데이터에 접근하는 함수들을 모음.
 @Injectable()
@@ -35,6 +37,8 @@ export class RestaurantService {
     private readonly restaurants: Repository<Restaurant>,
     @InjectRepository(Category)
     private readonly categories: CategoryRepository,
+    @InjectRepository(Dish)
+    private readonly dishes: Repository<Dish>,
   ) {}
 
   async validationErrorCheck(
@@ -198,7 +202,9 @@ export class RestaurantService {
     restaurantId,
   }: RestaurantInput): Promise<RestaurantOutput> {
     try {
-      const restaurant = await this.restaurants.findOne(restaurantId);
+      const restaurant = await this.restaurants.findOne(restaurantId, {
+        relations: ['menu'],
+      });
       if (!restaurant) {
         return { ok: false, error: '해당 레스토랑을 찾을 수 없습니다.' };
       }
@@ -235,6 +241,36 @@ export class RestaurantService {
       };
     } catch {
       return { ok: false, error: '원하는 레스토랑을 찾을 수 없습니다.' };
+    }
+  }
+
+  async createDish(
+    owner: User,
+    createDishInput: CreateDishInput,
+  ): Promise<CreateDishOutput> {
+    try {
+      const restaurant = await this.restaurants.findOne(
+        createDishInput.restaurantId,
+      );
+      console.log(restaurant);
+      if (!restaurant) {
+        return { ok: false, error: '해당 레스토랑을 찾지 못했습니다.' };
+      }
+      if (owner.id !== restaurant.ownerId) {
+        return {
+          ok: false,
+          error: '해당 레스토랑의 owner 만 메뉴를 만들 수 있습니다.',
+        };
+      }
+
+      await this.dishes.save(
+        this.dishes.create({ ...createDishInput, restaurant }),
+      );
+
+      // await this.restaurants.save({ menu: dish });
+      return { ok: true };
+    } catch {
+      return { ok: false, error: '메뉴를 생성에 실패했습니다.' };
     }
   }
 }
