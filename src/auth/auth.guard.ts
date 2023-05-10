@@ -3,11 +3,17 @@ import { Reflector } from '@nestjs/core';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { AlloedRoles } from './role.decorator';
 import { User } from 'src/users/entities/user.entity';
+import { JwtService } from 'src/jwt/jwt.service';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
-  canActivate(context: ExecutionContext) {
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly jwtService: JwtService,
+    private readonly usersSrevice: UsersService,
+  ) {}
+  async canActivate(context: ExecutionContext) {
     // SetMataData 로 지정한 내용은 reflector 를 이용해 읽어올 수 있다.
     // 즉, resolver에서 Role decorator 를 이용해 metadata 로 넣어준 내용이 무엇인지
     // AuthGuard 에서 읽어와서 user 의 role과 맞춰보고 더 진행할지 막을지를 결정한다.
@@ -21,16 +27,26 @@ export class AuthGuard implements CanActivate {
       return true;
     }
     const gqlContext = GqlExecutionContext.create(context).getContext();
-    const user: User = gqlContext['user'];
-    if (!user) {
+    const token = gqlContext.token;
+    if (token) {
+      const decoded = this.jwtService.verify(token.toString());
+      if (typeof decoded === 'object' && decoded.hasOwnProperty('id')) {
+        const { user } = await this.usersSrevice.findUserById(decoded['id']);
+
+        if (!user) {
+          return false;
+        }
+        gqlContext['user'] = user;
+        // role 이 'Any'라는 의미는 user 계정이 만들어진 모든 사용자가 접근할수 있는 resolver
+        if (roles.includes('Any')) {
+          return true;
+        }
+        // role이 있는 경우, 그 role 만 pass
+        // roles 는 ["Owner"]과 같은 array 형태라 "Owner"와 직접 비교할 수 없으므로 포함하고 있는지 체크
+        return roles.includes(user.role);
+      }
+    } else {
       return false;
     }
-    // role 이 'Any'라는 의미는 user 계정이 만들어진 모든 사용자가 접근할수 있는 resolver
-    if (roles.includes('Any')) {
-      return true;
-    }
-    // role이 있는 경우, 그 role 만 pass
-    // roles 는 ["Owner"]과 같은 array 형태라 "Owner"와 직접 비교할 수 없으므로 포함하고 있는지 체크
-    return roles.includes(user.role);
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Order } from './entities/order.entity';
+import { Order, OrderStatus } from './entities/order.entity';
 import { Repository } from 'typeorm';
 import { CreateOrderInput, CreateOrderOutput } from './dtos/create-order.dto';
 import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
@@ -9,6 +9,7 @@ import { OrderItem } from './entities/order-item.entity';
 import { Dish } from 'src/restaurants/entities/dish.entity';
 import { GetOrdersInput, GetOrdersOutput } from './dtos/get-orders.dto';
 import { GetOrderInput, GetOrderOutput } from './dtos/get-order.dto';
+import { EditOrderInput, EditOrderOutput } from './dtos/edit-order.dto';
 
 @Injectable()
 export class OrderService {
@@ -130,6 +131,21 @@ export class OrderService {
     }
   }
 
+  canSeeOrder(user: User, order: Order): boolean {
+    // 본인과 관계된 오더만 가져올 수 있게 한다.
+    let canSee = true;
+    if (user.role === UserRole.Client && user.id !== order.customerId) {
+      canSee = false;
+    }
+    if (user.role === UserRole.Delivery && user.id !== order.driverId) {
+      canSee = false;
+    }
+    if (user.role === UserRole.Owner && user.id !== order.restaurant.ownerId) {
+      canSee = false;
+    }
+    return canSee;
+  }
+
   async getOrder(
     user: User,
     { id: orderId }: GetOrderInput,
@@ -144,27 +160,64 @@ export class OrderService {
           error: '해당 주문이 존재하지 않습니다.',
         };
       }
-      // 본인과 관계된 오더만 가져올 수 있게 한다.
-      let canSee = true;
-      if (user.role === UserRole.Client && user.id !== order.customerId) {
-        canSee = false;
-      }
-      if (user.role === UserRole.Delivery && user.id !== order.driverId) {
-        canSee = false;
-      }
-      if (
-        user.role === UserRole.Owner &&
-        user.id !== order.restaurant.ownerId
-      ) {
-        canSee = false;
-      }
 
-      if (!canSee) {
+      if (!this.canSeeOrder(user, order)) {
         return {
           ok: false,
           error: '해당주문과 관련된 사람만 주문을 볼 수 있습니다.',
         };
       }
+      return { ok: true, order };
+    } catch {
+      return { ok: false };
+    }
+  }
+
+  async editOrder(
+    user: User,
+    { id: orderId, status }: EditOrderInput,
+  ): Promise<EditOrderOutput> {
+    try {
+      const order = await this.orders.findOne(orderId, {
+        relations: ['restaurant'],
+      });
+      if (!order) {
+        return {
+          ok: false,
+          error: '해당 주문이 존재하지 않습니다.',
+        };
+      }
+
+      let canEditOrder = true;
+      if (user.role === UserRole.Client) {
+        canEditOrder = false;
+      }
+      if (user.role === UserRole.Owner) {
+        if (status !== OrderStatus.Cooked && status !== OrderStatus.Cooking) {
+          canEditOrder = false;
+        }
+      }
+      if (user.role === UserRole.Delivery) {
+        if (
+          status !== OrderStatus.PickedUp &&
+          status !== OrderStatus.Delivered
+        ) {
+          canEditOrder = false;
+        }
+      }
+      if (!canEditOrder) {
+        return {
+          ok: false,
+          error: '해당주문과 관련된 사람만 수정할 수 있습니다.',
+        };
+      }
+
+      await this.orders.save([
+        {
+          id: orderId,
+          status,
+        },
+      ]);
       return { ok: true, order };
     } catch {
       return { ok: false };
