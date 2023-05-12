@@ -17,6 +17,7 @@ import {
   PUB_SUB,
 } from 'src/common/commom.constant';
 import { PubSub } from 'graphql-subscriptions';
+import { TakeOrderInput, TakeOrderOutput } from './dtos/take-order.dto';
 
 @Injectable()
 export class OrderService {
@@ -235,18 +236,49 @@ export class OrderService {
       // order 의 상태가 cooked로 바뀌면 driver 에게 알려진다.
       if (user.role === UserRole.Owner) {
         if (status === OrderStatus.Cooked) {
-          this.pubSub.publish(NEW_COOKED_ORDER, {
+          await this.pubSub.publish(NEW_COOKED_ORDER, {
             cookedOrders: newOrder,
           });
         }
       }
       // order 의 상태가 바뀌면 모든 사용자에게 알려진다.
-      this.pubSub.publish(NEW_ORDER_UPDATE, {
+      await this.pubSub.publish(NEW_ORDER_UPDATE, {
         orderUpdates: newOrder,
       });
       return { ok: true, order };
     } catch {
       return { ok: false };
+    }
+  }
+
+  async takeOrder(
+    driver: User,
+    { id: orderId }: TakeOrderInput,
+  ): Promise<TakeOrderOutput> {
+    try {
+      const order = await this.orders.findOne(orderId);
+      if (!order) {
+        return { ok: false, error: '해당 주문을 찾을 수 없습니다.' };
+      }
+      if (order.driver) {
+        return { ok: false, error: '이미 배달지정이 된 주문입니다.' };
+      }
+      // save 함수내에 배열을 넣어주면 자동완성기능이 붙는다. 배열없이 {}로만 넣어도 로직은 작동한다.
+      await this.orders.save([
+        {
+          id: orderId,
+          driver,
+        },
+      ]);
+      await this.pubSub.publish(NEW_ORDER_UPDATE, {
+        orderUpdates: { ...order, driver },
+      });
+      return { ok: true };
+    } catch {
+      return {
+        ok: false,
+        error: '이 배달을 지정하는데 실패했습니다.',
+      };
     }
   }
 }
