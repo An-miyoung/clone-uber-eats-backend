@@ -22,6 +22,7 @@ import { Dish } from './restaurants/entities/dish.entity';
 import { OrdersModule } from './orders/orders.module';
 import { Order } from './orders/entities/order.entity';
 import { OrderItem } from './orders/entities/order-item.entity';
+import { CommonModule } from './common/common.module';
 
 // graphQl 에 쿼리를 전달해 주기 위해 필요
 @Module({
@@ -85,6 +86,7 @@ import { OrderItem } from './orders/entities/order-item.entity';
     AuthModule,
     RestaurantsModule,
     OrdersModule,
+    CommonModule,
   ],
   controllers: [],
   providers: [],

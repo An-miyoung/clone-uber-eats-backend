@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Order, OrderStatus } from './entities/order.entity';
 import { Repository } from 'typeorm';
@@ -10,6 +10,13 @@ import { Dish } from 'src/restaurants/entities/dish.entity';
 import { GetOrdersInput, GetOrdersOutput } from './dtos/get-orders.dto';
 import { GetOrderInput, GetOrderOutput } from './dtos/get-order.dto';
 import { EditOrderInput, EditOrderOutput } from './dtos/edit-order.dto';
+import {
+  NEW_COOKED_ORDER,
+  NEW_ORDER_UPDATE,
+  NEW_PENDING_ORDER,
+  PUB_SUB,
+} from 'src/common/commom.constant';
+import { PubSub } from 'graphql-subscriptions';
 
 @Injectable()
 export class OrderService {
@@ -20,6 +27,7 @@ export class OrderService {
     @InjectRepository(Dish) private readonly dishes: Repository<Dish>,
     @InjectRepository(Restaurant)
     private readonly restaurants: Repository<Restaurant>,
+    @Inject(PUB_SUB) private readonly pubSub: PubSub,
   ) {}
 
   async createOrder(
@@ -66,7 +74,7 @@ export class OrderService {
         );
         orderItems.push(orderItem);
       }
-      await this.orders.save(
+      const order = await this.orders.save(
         this.orders.create({
           customer,
           restaurant,
@@ -74,6 +82,12 @@ export class OrderService {
           items: orderItems,
         }),
       );
+      await this.pubSub.publish(NEW_PENDING_ORDER, {
+        pendingOrders: {
+          order,
+          ownerId: restaurant.ownerId,
+        },
+      });
       return { ok: true };
     } catch {
       return { ok: false, error: '주문에 실패했습니다.' };
@@ -179,7 +193,7 @@ export class OrderService {
   ): Promise<EditOrderOutput> {
     try {
       const order = await this.orders.findOne(orderId, {
-        relations: ['restaurant'],
+        relations: ['restaurant', 'customer', 'driver'],
       });
       if (!order) {
         return {
@@ -211,13 +225,25 @@ export class OrderService {
           error: '해당주문과 관련된 사람만 수정할 수 있습니다.',
         };
       }
-
       await this.orders.save([
         {
           id: orderId,
           status,
         },
       ]);
+      const newOrder = { ...order, status };
+      // order 의 상태가 cooked로 바뀌면 driver 에게 알려진다.
+      if (user.role === UserRole.Owner) {
+        if (status === OrderStatus.Cooked) {
+          this.pubSub.publish(NEW_COOKED_ORDER, {
+            cookedOrders: newOrder,
+          });
+        }
+      }
+      // order 의 상태가 바뀌면 모든 사용자에게 알려진다.
+      this.pubSub.publish(NEW_ORDER_UPDATE, {
+        orderUpdates: newOrder,
+      });
       return { ok: true, order };
     } catch {
       return { ok: false };
