@@ -169,6 +169,9 @@ export class RestaurantService {
         take: 25,
         // 몇개 item 까지 스킵할것인가 계샨
         skip: (page - 1) * 25,
+        order: {
+          isPromoted: 'DESC',
+        },
       });
 
       const totalResults = await this.countRestaurant(category);
@@ -188,6 +191,9 @@ export class RestaurantService {
       const [restaurants, totalResults] = await this.restaurants.findAndCount({
         skip: (page - 1) * 25,
         take: 25,
+        order: {
+          isPromoted: 'DESC',
+        },
       });
       return {
         ok: true,
@@ -233,6 +239,9 @@ export class RestaurantService {
         },
         skip: (page - 1) * 25,
         take: 25,
+        order: {
+          isPromoted: 'DESC',
+        },
       });
 
       return {
