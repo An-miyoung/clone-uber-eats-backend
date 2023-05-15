@@ -9,6 +9,7 @@ import {
 } from './dtos/create-payment.dto';
 import { Payment } from './entities/payment.entity';
 import { PaymentService } from './payments.service';
+import { GetPaymentsOutput } from './dtos/get-payments.dto';
 
 @Resolver((of) => Payment)
 export class PaymentResolver {
@@ -21,5 +22,11 @@ export class PaymentResolver {
     @Args('input') createPaymentInput: CreatePaymentInput,
   ): Promise<CreatePaymentOutput> {
     return this.paymentService.createPayment(owner, createPaymentInput);
+  }
+
+  @Query((returns) => GetPaymentsOutput)
+  @Role(['Owner'])
+  async getPayments(@AuthUser() owner: User): Promise<GetPaymentsOutput> {
+    return this.paymentService.getPayments(owner);
   }
 }

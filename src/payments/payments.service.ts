@@ -8,6 +8,8 @@ import {
   CreatePaymentOutput,
 } from './dtos/create-payment.dto';
 import { Payment } from './entities/payment.entity';
+import { GetPaymentsOutput } from './dtos/get-payments.dto';
+import { error } from 'console';
 
 @Injectable()
 export class PaymentService {
@@ -51,6 +53,21 @@ export class PaymentService {
       return {
         ok: false,
         error: '결제에 실패했습니다.',
+      };
+    }
+  }
+
+  async getPayments(owner: User): Promise<GetPaymentsOutput> {
+    try {
+      const payments = await this.payments.find({ user: owner });
+      return {
+        ok: true,
+        payments,
+      };
+    } catch {
+      return {
+        ok: false,
+        error: '결제내역을 불러오는데 실패했습니다.',
       };
     }
   }
