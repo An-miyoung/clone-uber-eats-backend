@@ -166,9 +166,9 @@ export class RestaurantService {
           category,
         },
         // 한페이지당 몇개의 item 을 보여줄지
-        take: 25,
+        take: 10,
         // 몇개 item 까지 스킵할것인가 계샨
-        skip: (page - 1) * 25,
+        skip: (page - 1) * 10,
         order: {
           isPromoted: 'DESC',
         },
@@ -179,7 +179,7 @@ export class RestaurantService {
         ok: true,
         restaurants,
         category,
-        totalPages: Math.ceil(totalResults / 25),
+        totalPages: Math.ceil(totalResults / 10),
       };
     } catch (error) {
       return { ok: false, error: '해당 카테고리를 읽어오는데 실패했습니다.' };
@@ -189,8 +189,8 @@ export class RestaurantService {
   async allRestaurants({ page }: RestaurantsInput): Promise<RestaurantsOutput> {
     try {
       const [restaurants, totalResults] = await this.restaurants.findAndCount({
-        skip: (page - 1) * 25,
-        take: 25,
+        skip: (page - 1) * 10,
+        take: 10,
         order: {
           isPromoted: 'DESC',
         },
@@ -198,7 +198,7 @@ export class RestaurantService {
       return {
         ok: true,
         results: restaurants,
-        totalPages: Math.ceil(totalResults / 25),
+        totalPages: Math.ceil(totalResults / 10),
         totalResults,
       };
     } catch (error) {
@@ -237,8 +237,8 @@ export class RestaurantService {
           // sql 을 써서 db 에 직접 명령을 내리도록 Raw 사용
           name: Raw((name) => `${name} ILike '%${query}%'`),
         },
-        skip: (page - 1) * 25,
-        take: 25,
+        skip: (page - 1) * 10,
+        take: 10,
         order: {
           isPromoted: 'DESC',
         },
@@ -248,7 +248,7 @@ export class RestaurantService {
         ok: true,
         restaurants,
         totalResults,
-        totalPages: Math.ceil(totalResults / 25),
+        totalPages: Math.ceil(totalResults / 10),
       };
     } catch {
       return { ok: false, error: '원하는 레스토랑을 찾을 수 없습니다.' };
