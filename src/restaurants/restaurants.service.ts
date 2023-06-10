@@ -70,17 +70,20 @@ export class RestaurantService {
     }
   }
 
-  async myRestaurants(owner: User): Promise<MyRestaurantsOutput> {
-    try {
-      const restaurants = await this.restaurants.find({ owner });
-      return {
-        ok: true,
-        restaurants,
-      };
-    } catch {
-      return { ok: false, error: '레스토랑을 찾지 못했습니다.' };
-    }
-  }
+  // async myRestaurants(owner: User): Promise<MyRestaurantsOutput> {
+  //   try {
+  //     const restaurants = await this.restaurants.find({ owner });
+  //     return {
+  //       ok: true,
+  //       restaurants,
+  //     };
+  //   } catch {
+  //     return {
+  //       ok: false,
+  //        error: '레스토랑을 찾지 못했습니다.'
+  //        };
+  //   }
+  // }
 
   async createRestaurant(
     owner: User,
@@ -356,6 +359,21 @@ export class RestaurantService {
       return { ok: true };
     } catch {
       return { ok: false, error: '메뉴를 삭제하는 데 실패했습니다.' };
+    }
+  }
+
+  async myRestaurants(owner: User): Promise<MyRestaurantsOutput> {
+    try {
+      const restaurants = await this.restaurants.find({ owner });
+      return {
+        restaurants,
+        ok: true,
+      };
+    } catch {
+      return {
+        ok: false,
+        error: 'Could not find restaurants.',
+      };
     }
   }
 }
