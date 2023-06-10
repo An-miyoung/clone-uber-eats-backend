@@ -30,6 +30,10 @@ import { CreateDishInput, CreateDishOutput } from './dtos/create-dish.dto';
 import { Dish } from './entities/dish.entity';
 import { EditDishInput, EditDishOutput } from './dtos/edit-dish.dto';
 import { DeleteDishInput, DeleteDishOutput } from './dtos/delete-dish.dto';
+import {
+  MyRestaurantsInput,
+  MyRestaurantsOutput,
+} from './dtos/My-restaurants.dto';
 
 // 실제 데이터에 접근하는 함수들을 모음.
 @Injectable()
@@ -66,6 +70,18 @@ export class RestaurantService {
         ok: false,
         error: '레스토랑 계정은 owner 만 권한이 있습니다.',
       };
+    }
+  }
+
+  async myRestaurants(owner: User): Promise<MyRestaurantsOutput> {
+    try {
+      const restaurants = await this.restaurants.find({ owner });
+      return {
+        ok: true,
+        restaurants,
+      };
+    } catch {
+      return { ok: false, error: '레스토랑을 찾지 못했습니다.' };
     }
   }
 
