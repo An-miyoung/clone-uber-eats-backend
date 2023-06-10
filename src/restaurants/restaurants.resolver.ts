@@ -40,7 +40,7 @@ import { Dish } from './entities/dish.entity';
 import { CreateDishInput, CreateDishOutput } from './dtos/create-dish.dto';
 import { DeleteDishInput, DeleteDishOutput } from './dtos/delete-dish.dto';
 import { EditDishInput, EditDishOutput } from './dtos/edit-dish.dto';
-import { MyRestaurantsOutput } from './dtos/My-restaurants.dto';
+import { MyRestaurantsOutput } from './dtos/my-restaurnat.dto';
 
 @Resolver((of) => Restaurant)
 export class RestaurantsResolver {

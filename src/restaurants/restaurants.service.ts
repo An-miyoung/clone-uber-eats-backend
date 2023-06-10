@@ -30,10 +30,7 @@ import { CreateDishInput, CreateDishOutput } from './dtos/create-dish.dto';
 import { Dish } from './entities/dish.entity';
 import { EditDishInput, EditDishOutput } from './dtos/edit-dish.dto';
 import { DeleteDishInput, DeleteDishOutput } from './dtos/delete-dish.dto';
-import {
-  MyRestaurantsInput,
-  MyRestaurantsOutput,
-} from './dtos/My-restaurants.dto';
+import { MyRestaurantsOutput } from './dtos/my-restaurnat.dto';
 
 // 실제 데이터에 접근하는 함수들을 모음.
 @Injectable()
