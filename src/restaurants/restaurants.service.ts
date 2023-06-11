@@ -99,6 +99,7 @@ export class RestaurantService {
       await this.restaurants.save(newRestaurant);
       return {
         ok: true,
+        restaurantId: newRestaurant.id,
       };
     } catch (error) {
       return { ok: false, error: '새로운 레스토랑계정을 만들지 못했습니다.' };
