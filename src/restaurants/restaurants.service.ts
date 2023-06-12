@@ -30,11 +30,11 @@ import { CreateDishInput, CreateDishOutput } from './dtos/create-dish.dto';
 import { Dish } from './entities/dish.entity';
 import { EditDishInput, EditDishOutput } from './dtos/edit-dish.dto';
 import { DeleteDishInput, DeleteDishOutput } from './dtos/delete-dish.dto';
-import { MyRestaurantsOutput } from './dtos/my-restaurnat.dto';
+import { MyRestaurantsOutput } from './dtos/my-restaurnats.dto';
 import {
-  MyOneRestaurantInput,
-  MyOneRestaurantOutput,
-} from './dtos/my-one-restaurant';
+  MyRestaurantInput,
+  MyRestaurantOutput,
+} from './dtos/my-restaurant.dto';
 
 // 실제 데이터에 접근하는 함수들을 모음.
 @Injectable()
@@ -384,8 +384,8 @@ export class RestaurantService {
 
   async myRestaurant(
     owner: User,
-    { id }: MyOneRestaurantInput,
-  ): Promise<MyOneRestaurantOutput> {
+    { id }: MyRestaurantInput,
+  ): Promise<MyRestaurantOutput> {
     try {
       const restaurant = await this.restaurants.findOne({ owner, id });
       return {
