@@ -89,8 +89,12 @@ export class OrderService {
           ownerId: restaurant.ownerId,
         },
       });
-      return { ok: true };
-    } catch {
+      return {
+        ok: true,
+        orderId: order.id,
+      };
+    } catch (e) {
+      console.log(e);
       return { ok: false, error: '주문에 실패했습니다.' };
     }
   }
